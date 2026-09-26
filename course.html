@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Roboracer Course</title>
 <link rel="icon" href="assets/logos/RoboRacer_SquareLogo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:ital,wght@1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -18,49 +20,39 @@ document.title = c.title + " | Roboracer";
 const enrolled = () => (load("enrolled") || "").split(",").includes(c.id);
 const doneKey = "done-" + c.id;
 const done = () => new Set((load(doneKey) || "").split("|").filter(Boolean));
-const lectures = MODULES.flatMap(m => m[1]).map(l => l[0]);
-const FAQ = [
-  ["What web browser should I use?", "The Open edX platform works best with current versions of Chrome, Edge, Firefox, Internet Explorer or Safari."],
-  ["Do I need to buy and build the Roboracer hardware?", "No. The car is an additional add-on and gives you important insight into deploying software on real hardware. Everything can be done in the simulator."],
-  ["Is the course really free?", "Yes. Everyone can take the full course, and instructors can copy it without any licensing."],
-  ["Can I use only some lectures?", "Instructors can pick which lectures to teach, based on prior knowledge, available time and student interest."],
-  ["Is there a human instructor I can chat to?", "Use the discussion group to ask questions; your course staff and other students will answer."],
-];
+const mods = outline(c), total = lectureCount(c);
 
 function head() {
   const on = enrolled();
-  return `<div class="coursehead"><div><h1>${c.title}</h1><div style="color:var(--muted)">${c.org}</div>
-    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn ${on ? "" : "primary"}" id="enroll">${on ? "✓ You are enrolled" : "Enroll now"}</button>
-      ${on ? `<button class="btn primary" id="view">View course</button>` : ""}</div></div>${thumb(c)}</div>`;
+  return `<div class="coursehead"><div><div class="crumb"><a href="index.html#courses">Courses</a> / ${c.org.replace(/-/g, " ")}</div><h1>${c.title}</h1>
+    <div style="opacity:.85">${c.weeks} weeks · ${c.effort}</div>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn ${on ? "ghost" : "primary"} lg" id="enroll">${on ? "✓ Enrolled" : "Enroll now"}</button>
+      ${on ? `<button class="btn primary lg" id="view">View course</button>` : ""}</div></div>${thumb(c)}</div>`;
 }
-function about() {
-  return `<h2>About this course</h2>
+const about = () => `<h2 style="margin-top:0">About this course</h2>
   <p>${c.blurb} Whether it's a well-known car manufacturer like Tesla or new technology companies like Google, many different companies are working on the development of autonomous vehicles. This emerging field provides a lot of potential, and if you are interested in the foundations of autonomous driving, this course is for you.</p>
-  <p>This is not a theory-only lecture series: it is hands-on and lab-centered for everyone interested in artificial intelligence, motion planning, control theory and applied machine learning. From the very beginning you work with both a simulation environment and real hardware: our 1/10th-scale autonomous race car.</p>
-  <h2>What you'll learn</h2>
-  <ul><li>Introduction to the ROS framework</li><li>Refresh your control theory knowledge</li><li>Control theory and control application</li><li>Introduction to an simulator for autonomous driving</li>
-  <li>Different techniques for fast and secure path planning</li><li>Different methods for calculating the raceline for a given track</li><li>Different methods for detecting an object</li>
-  <li>Deploying software on real hardware</li><li>GPU acceleration for machine learning algorithms</li><li>Differences between SIL and HIL development</li><li>Head-to-head racing</li><li>Analytical skills to recognize and reason about situations with moral content</li></ul>
-  <h2>Prerequisites</h2><p>This course is an integration of the concepts above and is not intended to be a beginner course in any of the above subjects. The contents are best suited for the graduate level, if not at the very least an undergraduate senior-level course.</p>`;
-}
+  <p>This is not a theory-only lecture series: it is hands-on and lab-centered for everyone interested in artificial intelligence, motion planning, control theory and applied machine learning. From the very beginning you work with a simulation environment, and optionally with real hardware: our 1/10th-scale autonomous race car.</p>
+  <h2>What you'll learn</h2><ul class="learn">${learnFor(c).map(l => `<li>${ic("check")}<span>${l}</span></li>`).join("")}</ul>
+  <h2>Prerequisites</h2><p>This course integrates the concepts above and is not intended as a beginner course in any of these subjects. The contents are best suited for the graduate level, if not at the very least an undergraduate senior-level course.</p>`;
 function syllabus() {
-  const d = done(); let n = 0;
-  const mods = MODULES.map((m, i) => `<div class="acc ${i === 1 ? "open" : ""}"><button>${m[0]}</button><div class="in"><ul>${m[1].map(l => {
-    const key = l[0]; return `<li><label><input type="checkbox" data-k="${key.replace(/"/g, "")}" ${d.has(key) ? "checked" : ""}> ${l[0]}</label><small>${l[1] || ""}</small></li>`; }).join("")}</ul></div></div>`).join("");
-  return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px"><div style="flex:1"><small style="color:var(--muted)" id="ptxt"></small><div class="progress"><i id="pbar"></i></div></div><button class="btn" id="expand">Expand all</button></div>${mods}`;
+  const d = done();
+  return `<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px"><div style="flex:1"><small style="color:var(--muted)" id="ptxt"></small><div class="progress" style="margin-top:4px"><i id="pbar"></i></div></div><button class="btn sm" id="expand">Expand all</button></div>` +
+    mods.map((m, i) => `<div class="acc ${i === 1 ? "open" : ""}"><button>${m[0]}</button><div class="in"><ul>${m[1].map(l =>
+      `<li><label><input type="checkbox" data-k="${esc(l[0])}" ${d.has(l[0]) ? "checked" : ""}> ${l[0]}</label><small>${l[1] || ""}</small></li>`).join("")}</ul></div></div>`).join("");
 }
-function staff() {
-  return `<h2>Course staff</h2>` + STAFF.map(s => `<div class="staff"><div class="avatar">${s[1]}</div><div><b>${s[0]}</b><p>${s[2]}</p></div></div>`).join("") +
-    `<h2>Frequently asked questions</h2>` + FAQ.map(f => `<div class="acc"><button>${f[0]}</button><div class="in">${f[1]}</div></div>`).join("");
-}
-$("#main").innerHTML = head() + `<div class="layout" data-tabs><div>
-  <div class="tabs" role="tablist"><button class="on" data-tab="t1">About</button><button data-tab="t2">Course outline</button><button data-tab="t3">Staff &amp; FAQ</button></div>
-  <div class="tabpane on" id="t1">${about()}</div><div class="tabpane" id="t2">${syllabus()}</div><div class="tabpane" id="t3">${staff()}</div></div>
-  <aside class="side panel" style="align-self:start"><dl><dt>Course number</dt><dd>${c.code === "F110" ? "F110" : c.code}</dd><dt>Classes start</dt><dd>${c.starts}</dd><dt>Classes end</dt><dd>${c.ends}</dd><dt>Estimated effort</dt><dd>${c.effort}</dd><dt>Length</dt><dd>${c.weeks} weeks</dd></dl>
-  <div style="margin-top:16px;display:flex;gap:8px"><button class="btn" id="share">Copy link</button><a class="btn" href="index.html">← All courses</a></div></aside></div>`;
+const staff = () => `<h2 style="margin-top:0">${c.type === "university" && c.id !== "penn" ? "Course authors" : "Course staff"}</h2>
+  <div class="staff"><img src="${STAFF.img}" alt="${STAFF.name}"><div><b style="font-size:1.1rem">${STAFF.name}</b><p>${STAFF.bio}</p></div></div>
+  ${c.type === "university" && c.id !== "penn" ? `<p style="color:var(--muted);font-size:.9rem;margin-top:20px">Local instructors from ${c.org.replace(/-/g, " ")} are listed in the course announcements.</p>` : ""}`;
+const faq = () => `<h2 style="margin-top:0">Course logistics</h2>` + faqFor(c).map(f => `<div class="acc"><button>${f[0]}</button><div class="in">${f[1]}</div></div>`).join("");
 
-function progress() { const n = $$("#t2 input:checked").length; $("#ptxt").textContent = `${n} of ${lectures.length} items completed`; $("#pbar").style.width = (100 * n / lectures.length) + "%"; }
+$("#main").innerHTML = head() + `<div class="layout" data-tabs><div>
+  <div class="tabs" role="tablist"><button class="on" data-tab="t1">${ic("book")} About</button><button data-tab="t2">${ic("layers")} Course outline</button><button data-tab="t3">${ic("user")} Staff</button><button data-tab="t4">${ic("calendar")} Logistics</button></div>
+  <div class="tabpane on" id="t1">${about()}</div><div class="tabpane" id="t2">${syllabus()}</div><div class="tabpane" id="t3">${staff()}</div><div class="tabpane" id="t4">${faq()}</div></div>
+  <aside class="side panel"><dl><dt>Course number</dt><dd>${c.code}</dd><dt>Classes start</dt><dd>${c.starts}</dd><dt>Classes end</dt><dd>${c.ends}</dd><dt>Estimated effort</dt><dd>${c.effort}</dd><dt>Length</dt><dd>${c.weeks} weeks · ${total} units</dd></dl>
+  <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" id="share">${ic("link")} Copy link</button><a class="btn sm" href="index.html#courses">← All courses</a></div></aside></div>`;
+
+function progress() { const n = $$("#t2 input:checked").length; $("#ptxt").textContent = `${n} of ${total} units completed`; $("#pbar").style.width = (100 * n / total) + "%"; }
 function bind() {
   $("#enroll").onclick = () => { if (!requireSignIn()) return; const e = (load("enrolled") || "").split(",").filter(Boolean); const i = e.indexOf(c.id);
     if (i < 0) e.push(c.id); else e.splice(i, 1); save("enrolled", e.join(",")); toast(i < 0 ? "Enrolled!" : "Unenrolled"); $(".coursehead").outerHTML = head(); bind(); };
@@ -69,8 +61,8 @@ function bind() {
 }
 bind(); progress();
 $("#expand").onclick = e => { const accs = $$("#t2 .acc"); const all = accs.every(a => a.classList.contains("open")); accs.forEach(a => a.classList.toggle("open", !all)); e.target.textContent = all ? "Expand all" : "Collapse all"; };
-$("#t2").addEventListener("change", e => { if (!e.target.matches("input")) return; if (!load("user")) { e.target.checked = false; requireSignIn(); return; }
-  const s = new Set($$("#t2 input:checked").map(i => lectures.find(l => l.replace(/"/g, "") === i.dataset.k) || i.dataset.k)); save(doneKey, [...s].join("|")); progress(); });
+$("#t2").addEventListener("change", e => { if (!e.target.matches("input")) return; if (!requireSignIn()) { e.target.checked = false; return; }
+  save(doneKey, $$("#t2 input:checked").map(i => i.dataset.k).join("|")); progress(); });
 document.addEventListener("authchange", () => { $(".coursehead").outerHTML = head(); bind(); });
 </script>
 </body>

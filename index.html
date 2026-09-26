@@ -6,23 +6,29 @@
 <title>Roboracer Courses</title>
 <meta name="description" content="Free, open autonomous driving lectures – perception, planning, control and the Roboracer vehicle.">
 <link rel="icon" href="assets/logos/RoboRacer_SquareLogo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:ital,wght@1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 <main class="wrap">
   <section class="hero"><div class="hero-img">
-    <img src="assets/car.png" alt="Roboracer 1/10th scale autonomous race car on a track">
     <div class="hero-text">
-      <h1>The largest open collection of autonomous driving lectures</h1>
-      <p>From perception to planning and control, from hardware to software stacks. Free for everyone, ready to teach at your university.</p>
-      <div><a class="btn primary" href="#courses">Browse courses</a> <a class="btn" href="instructors.html">Teach this course</a></div>
+      <span class="eyebrow">Free &amp; open for everyone</span>
+      <h1>The largest open collection of <span>autonomous driving</span> lectures</h1>
+      <p>From perception to planning and control, from hardware to software stacks. Take everything for free, or teach it at your university.</p>
+      <div class="row"><a class="btn primary lg" href="#courses">Browse courses</a><a class="btn ghost lg" href="instructors.html">Teach this course</a></div>
     </div></div></section>
 
   <section class="stats" aria-label="Platform statistics">
-    <div class="stat"><b data-n="16">0</b><span>Lectures</span></div>
-    <div class="stat"><b data-n="1200">0</b><span>Members</span></div>
-    <div class="stat"><b data-n="12">0</b><span>Authors</span></div>
-    <div class="stat"><b data-n="7">0</b><span>Subjects</span></div>
+    <div class="stat"><div><b data-n="16">0</b><span>Courses</span></div></div>
+    <div class="stat"><div><b data-n="1200">0</b><span>Members</span></div></div>
+    <div class="stat"><div><b data-n="12">0</b><span>Instructors</span></div></div>
+    <div class="stat"><div><b data-n="7">0</b><span>Institutions</span></div></div>
+  </section>
+
+  <section id="mycourses" hidden style="margin-top:56px">
+    <h2 style="margin:0 0 16px;font-size:1.5rem">My courses</h2><div class="mc" id="mc"></div>
   </section>
 
   <section id="courses">
@@ -30,41 +36,48 @@
       <h2>All courses <small id="count" style="color:var(--muted);font-weight:400"></small></h2>
       <input id="q" type="search" placeholder="Search courses…" aria-label="Search courses">
       <select id="inst" aria-label="Institution"><option value="">All institutions</option></select>
-      <select id="dur" aria-label="Duration"><option value="">Any duration</option><option>4</option><option>10</option><option>15</option></select>
+      <select id="dur" aria-label="Duration"><option value="">Any duration</option><option value="4">4 weeks</option><option value="10">10 weeks</option><option value="15">15 weeks</option></select>
       <select id="sort" aria-label="Sort"><option value="def">Default order</option><option value="az">Title A–Z</option><option value="new">Newest start</option></select>
-      <div class="seg" role="group" aria-label="View"><button id="vgrid" class="on" title="Grid">▦</button><button id="vlist" title="List">☰</button></div>
+      <div class="seg" role="group" aria-label="View"><button id="vgrid" class="on" title="Grid view" aria-label="Grid view">▦</button><button id="vlist" title="List view" aria-label="List view">☰</button></div>
     </div>
     <div class="grid" id="grid"></div>
   </section>
 
   <section class="sect" id="discover">
-    <h2>Everything in one course</h2>
-    <div class="features">
-      <div class="feat"><h3>Lecture slides &amp; videos</h3><p>Complete material you can copy and reuse without any licensing.</p></div>
-      <div class="feat"><h3>Interactive tests</h3><p>Quizzes and coding exercises, with built-in grading support.</p></div>
-      <div class="feat"><h3>Lecturer notes</h3><p>Extra explanation text for instructors, so you need almost no teaching assistants.</p></div>
-      <div class="feat"><h3>Discussion group</h3><p>Students ask questions and take part in discussions.</p></div>
-      <div class="feat"><h3>Rebrand it</h3><p>Add your university or lab logo and colours.</p></div>
-      <div class="feat"><h3>Pick your lectures</h3><p>Teach e.g. Lectures 2–5, 8–13 and 15, based on prior knowledge, time and interest.</p></div>
-      <div class="feat"><h3>Monthly extras</h3><p>Expert discussions, research updates and industry presentations.</p></div>
-    </div>
+    <div class="sect-head"><span class="kicker">The platform</span><h2>Everything in one open platform</h2>
+      <p>One all-in-one course that is not missing anything – ready to take, teach and make your own.</p></div>
+    <div class="features" id="features"></div>
   </section>
 </main>
 <script src="assets/js/app.js"></script>
 <script>
 shell("courses");
+const STATS = ["book", "users", "cap", "building"];
+$$(".stat").forEach((s, i) => s.insertAdjacentHTML("afterbegin", ic(STATS[i])));
+const FEATS = [
+  ["slides", "Lecture slides", "Complete, well-structured slide decks for every lecture – free to copy, edit and reuse."],
+  ["video", "Lecture videos", "Recorded lectures from perception to planning and control, plus curated videos from other researchers."],
+  ["code", "Interactive tests & coding", "Quizzes and hands-on coding exercises that check understanding as students go."],
+  ["notes", "Notes for lecturers", "Extra explanation text for instructors, so you need almost no teaching assistants."],
+  ["cap", "Related courses", "Necessary background courses shown right next to the lectures that need them."],
+  ["chat", "Discussion groups", "Students ask questions, share ideas and help each other in built-in discussions."],
+  ["grade", "Grading built in", "Set weights, pass thresholds and honor-code rules for quizzes, labs and races."],
+  ["calendar", "New content monthly", "Expert discussions, research updates and industry presentations you can plug in."],
+];
+const HL = [["copy", "Copy it, no licensing", "Copy the complete course for your own institution without any licensing."], ["palette", "Rebrand it", "Add your university or lab logo and your CI colours."], ["sliders", "Pick your lectures", "Teach Lectures 2–5, 8–13 and 15? Choose by prior knowledge, time and student interest."]];
+$("#features").innerHTML = FEATS.map(f => `<div class="feat"><div class="ico">${ic(f[0])}</div><h3>${f[1]}</h3><p>${f[2]}</p></div>`).join("") +
+  HL.map(f => `<div class="feat hl"><div class="ico">${ic(f[0])}</div><h3>${f[1]}</h3><p>${f[2]}</p></div>`).join("");
+
 const grid = $("#grid");
-[...new Set(COURSES.map(c => c.org))].forEach(o => $("#inst").insertAdjacentHTML("beforeend", `<option>${o}</option>`));
+[...new Set(COURSES.map(c => c.org))].forEach(o => $("#inst").insertAdjacentHTML("beforeend", `<option value="${o}">${o.replace(/-/g, " ")}</option>`));
 const dateVal = c => new Date(c.starts).getTime();
-function card(c) {
-  return `<a class="card" href="course.html?id=${c.id}">${thumb(c)}
-    <div class="body">${c.org}<br>${c.code}<span class="t">${c.title}</span>
-      <div class="badges"><span class="badge">${c.weeks} weeks</span><span class="badge">${c.effort}</span></div></div>
-    <div class="foot"><span>Starts: ${c.starts}</span></div></a>`;
-}
+const card = c => `<a class="card" href="course.html?id=${c.id}">${thumb(c)}
+  <div class="body">${c.org}<br>${c.code}<span class="t">${c.title}</span>
+    <div class="badges"><span class="badge">${c.weeks} weeks</span><span class="badge">${c.effort}</span></div></div>
+  <div class="foot"><span>Starts: ${c.starts}</span><span>${ic("arrow")}</span></div></a>`;
 function render() {
   const q = $("#q").value.toLowerCase(), i = $("#inst").value, d = $("#dur").value, s = $("#sort").value;
-  let l = COURSES.filter(c => (!q || (c.title + c.org + c.blurb).toLowerCase().includes(q)) && (!i || c.org === i) && (!d || c.weeks == d));
+  const l = COURSES.filter(c => (!q || (c.title + c.org + c.blurb).toLowerCase().includes(q)) && (!i || c.org === i) && (!d || c.weeks == d));
   if (s === "az") l.sort((a, b) => a.title.localeCompare(b.title));
   if (s === "new") l.sort((a, b) => dateVal(b) - dateVal(a));
   grid.innerHTML = l.map(card).join("") || `<div class="empty">No courses match your filters.</div>`;
@@ -74,7 +87,15 @@ function render() {
 const view = v => { grid.classList.toggle("list", v === "list"); $("#vlist").classList.toggle("on", v === "list"); $("#vgrid").classList.toggle("on", v !== "list"); save("view", v); };
 $("#vgrid").onclick = () => view("grid"); $("#vlist").onclick = () => view("list");
 view(load("view") || "grid"); render();
-// animated counters
+
+function myCourses() {
+  const u = user(), ids = (load("enrolled") || "").split(",").filter(Boolean), l = COURSES.filter(c => ids.includes(c.id));
+  $("#mycourses").hidden = !(u && l.length);
+  $("#mc").innerHTML = l.map(c => { const n = (load("done-" + c.id) || "").split("|").filter(Boolean).length, t = lectureCount(c), p = Math.round(100 * n / t);
+    return `<div class="row">${thumb(c)}<div><b>${c.title}</b><div class="progress" style="margin:8px 0 4px"><i style="width:${p}%"></i></div><small style="color:var(--muted)">${n} of ${t} units · ${p}%</small></div><a class="btn sm primary" href="course.html?id=${c.id}">Continue</a></div>`; }).join("");
+}
+myCourses(); document.addEventListener("authchange", myCourses);
+
 const io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; io.unobserve(e.target);
   const n = +e.target.dataset.n; let k = 0; const step = () => { k = Math.min(n, k + Math.ceil(n / 40)); e.target.textContent = k.toLocaleString() + (n >= 1000 && k === n ? "+" : ""); if (k < n) requestAnimationFrame(step); }; step(); }));
 $$("[data-n]").forEach(el => io.observe(el));
