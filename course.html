@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Roboracer Course</title>
+<link rel="icon" href="assets/logos/RoboRacer_SquareLogo.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<main class="wrap" id="main"></main>
+<script src="assets/js/app.js"></script>
+<script>
+shell("courses");
+const id = new URLSearchParams(location.search).get("id");
+const c = COURSES.find(x => x.id === id) || COURSES[2];
+document.title = c.title + " | Roboracer";
+const enrolled = () => (load("enrolled") || "").split(",").includes(c.id);
+const doneKey = "done-" + c.id;
+const done = () => new Set((load(doneKey) || "").split("|").filter(Boolean));
+const lectures = MODULES.flatMap(m => m[1]).map(l => l[0]);
+const FAQ = [
+  ["What web browser should I use?", "The Open edX platform works best with current versions of Chrome, Edge, Firefox, Internet Explorer or Safari."],
+  ["Do I need to buy and build the Roboracer hardware?", "No. The car is an additional add-on and gives you important insight into deploying software on real hardware. Everything can be done in the simulator."],
+  ["Is the course really free?", "Yes. Everyone can take the full course, and instructors can copy it without any licensing."],
+  ["Can I use only some lectures?", "Instructors can pick which lectures to teach, based on prior knowledge, available time and student interest."],
+  ["Is there a human instructor I can chat to?", "Use the discussion group to ask questions; your course staff and other students will answer."],
+];
+
+function head() {
+  const on = enrolled();
+  return `<div class="coursehead"><div><h1>${c.title}</h1><div style="color:var(--muted)">${c.org}</div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn ${on ? "" : "primary"}" id="enroll">${on ? "✓ You are enrolled" : "Enroll now"}</button>
+      ${on ? `<button class="btn primary" id="view">View course</button>` : ""}</div></div>${thumb(c)}</div>`;
+}
+function about() {
+  return `<h2>About this course</h2>
+  <p>${c.blurb} Whether it's a well-known car manufacturer like Tesla or new technology companies like Google, many different companies are working on the development of autonomous vehicles. This emerging field provides a lot of potential, and if you are interested in the foundations of autonomous driving, this course is for you.</p>
+  <p>This is not a theory-only lecture series: it is hands-on and lab-centered for everyone interested in artificial intelligence, motion planning, control theory and applied machine learning. From the very beginning you work with both a simulation environment and real hardware: our 1/10th-scale autonomous race car.</p>
+  <h2>What you'll learn</h2>
+  <ul><li>Introduction to the ROS framework</li><li>Refresh your control theory knowledge</li><li>Control theory and control application</li><li>Introduction to an simulator for autonomous driving</li>
+  <li>Different techniques for fast and secure path planning</li><li>Different methods for calculating the raceline for a given track</li><li>Different methods for detecting an object</li>
+  <li>Deploying software on real hardware</li><li>GPU acceleration for machine learning algorithms</li><li>Differences between SIL and HIL development</li><li>Head-to-head racing</li><li>Analytical skills to recognize and reason about situations with moral content</li></ul>
+  <h2>Prerequisites</h2><p>This course is an integration of the concepts above and is not intended to be a beginner course in any of the above subjects. The contents are best suited for the graduate level, if not at the very least an undergraduate senior-level course.</p>`;
+}
+function syllabus() {
+  const d = done(); let n = 0;
+  const mods = MODULES.map((m, i) => `<div class="acc ${i === 1 ? "open" : ""}"><button>${m[0]}</button><div class="in"><ul>${m[1].map(l => {
+    const key = l[0]; return `<li><label><input type="checkbox" data-k="${key.replace(/"/g, "")}" ${d.has(key) ? "checked" : ""}> ${l[0]}</label><small>${l[1] || ""}</small></li>`; }).join("")}</ul></div></div>`).join("");
+  return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px"><div style="flex:1"><small style="color:var(--muted)" id="ptxt"></small><div class="progress"><i id="pbar"></i></div></div><button class="btn" id="expand">Expand all</button></div>${mods}`;
+}
+function staff() {
+  return `<h2>Course staff</h2>` + STAFF.map(s => `<div class="staff"><div class="avatar">${s[1]}</div><div><b>${s[0]}</b><p>${s[2]}</p></div></div>`).join("") +
+    `<h2>Frequently asked questions</h2>` + FAQ.map(f => `<div class="acc"><button>${f[0]}</button><div class="in">${f[1]}</div></div>`).join("");
+}
+$("#main").innerHTML = head() + `<div class="layout" data-tabs><div>
+  <div class="tabs" role="tablist"><button class="on" data-tab="t1">About</button><button data-tab="t2">Course outline</button><button data-tab="t3">Staff &amp; FAQ</button></div>
+  <div class="tabpane on" id="t1">${about()}</div><div class="tabpane" id="t2">${syllabus()}</div><div class="tabpane" id="t3">${staff()}</div></div>
+  <aside class="side panel" style="align-self:start"><dl><dt>Course number</dt><dd>${c.code === "F110" ? "F110" : c.code}</dd><dt>Classes start</dt><dd>${c.starts}</dd><dt>Classes end</dt><dd>${c.ends}</dd><dt>Estimated effort</dt><dd>${c.effort}</dd><dt>Length</dt><dd>${c.weeks} weeks</dd></dl>
+  <div style="margin-top:16px;display:flex;gap:8px"><button class="btn" id="share">Copy link</button><a class="btn" href="index.html">← All courses</a></div></aside></div>`;
+
+function progress() { const n = $$("#t2 input:checked").length; $("#ptxt").textContent = `${n} of ${lectures.length} items completed`; $("#pbar").style.width = (100 * n / lectures.length) + "%"; }
+function bind() {
+  $("#enroll").onclick = () => { if (!requireSignIn()) return; const e = (load("enrolled") || "").split(",").filter(Boolean); const i = e.indexOf(c.id);
+    if (i < 0) e.push(c.id); else e.splice(i, 1); save("enrolled", e.join(",")); toast(i < 0 ? "Enrolled!" : "Unenrolled"); $(".coursehead").outerHTML = head(); bind(); };
+  const v = $("#view"); if (v) v.onclick = () => $$(".tabs button")[1].click();
+  $("#share").onclick = () => navigator.clipboard?.writeText(location.href).then(() => toast("Link copied"), () => toast("Copy failed"));
+}
+bind(); progress();
+$("#expand").onclick = e => { const accs = $$("#t2 .acc"); const all = accs.every(a => a.classList.contains("open")); accs.forEach(a => a.classList.toggle("open", !all)); e.target.textContent = all ? "Expand all" : "Collapse all"; };
+$("#t2").addEventListener("change", e => { if (!e.target.matches("input")) return; if (!load("user")) { e.target.checked = false; requireSignIn(); return; }
+  const s = new Set($$("#t2 input:checked").map(i => lectures.find(l => l.replace(/"/g, "") === i.dataset.k) || i.dataset.k)); save(doneKey, [...s].join("|")); progress(); });
+document.addEventListener("authchange", () => { $(".coursehead").outerHTML = head(); bind(); });
+</script>
+</body>
+</html>

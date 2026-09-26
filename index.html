@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Roboracer Courses</title>
+<meta name="description" content="Free, open autonomous driving lectures – perception, planning, control and the Roboracer vehicle.">
+<link rel="icon" href="assets/logos/RoboRacer_SquareLogo.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<main class="wrap">
+  <section class="hero"><div class="hero-img">
+    <img src="assets/car.png" alt="Roboracer 1/10th scale autonomous race car on a track">
+    <div class="hero-text">
+      <h1>The largest open collection of autonomous driving lectures</h1>
+      <p>From perception to planning and control, from hardware to software stacks. Free for everyone, ready to teach at your university.</p>
+      <div><a class="btn primary" href="#courses">Browse courses</a> <a class="btn" href="instructors.html">Teach this course</a></div>
+    </div></div></section>
+
+  <section class="stats" aria-label="Platform statistics">
+    <div class="stat"><b data-n="16">0</b><span>Lectures</span></div>
+    <div class="stat"><b data-n="1200">0</b><span>Members</span></div>
+    <div class="stat"><b data-n="12">0</b><span>Authors</span></div>
+    <div class="stat"><b data-n="7">0</b><span>Subjects</span></div>
+  </section>
+
+  <section id="courses">
+    <div class="toolbar">
+      <h2>All courses <small id="count" style="color:var(--muted);font-weight:400"></small></h2>
+      <input id="q" type="search" placeholder="Search courses…" aria-label="Search courses">
+      <select id="inst" aria-label="Institution"><option value="">All institutions</option></select>
+      <select id="dur" aria-label="Duration"><option value="">Any duration</option><option>4</option><option>10</option><option>15</option></select>
+      <select id="sort" aria-label="Sort"><option value="def">Default order</option><option value="az">Title A–Z</option><option value="new">Newest start</option></select>
+      <div class="seg" role="group" aria-label="View"><button id="vgrid" class="on" title="Grid">▦</button><button id="vlist" title="List">☰</button></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="sect" id="discover">
+    <h2>Everything in one course</h2>
+    <div class="features">
+      <div class="feat"><h3>Lecture slides &amp; videos</h3><p>Complete material you can copy and reuse without any licensing.</p></div>
+      <div class="feat"><h3>Interactive tests</h3><p>Quizzes and coding exercises, with built-in grading support.</p></div>
+      <div class="feat"><h3>Lecturer notes</h3><p>Extra explanation text for instructors, so you need almost no teaching assistants.</p></div>
+      <div class="feat"><h3>Discussion group</h3><p>Students ask questions and take part in discussions.</p></div>
+      <div class="feat"><h3>Rebrand it</h3><p>Add your university or lab logo and colours.</p></div>
+      <div class="feat"><h3>Pick your lectures</h3><p>Teach e.g. Lectures 2–5, 8–13 and 15, based on prior knowledge, time and interest.</p></div>
+      <div class="feat"><h3>Monthly extras</h3><p>Expert discussions, research updates and industry presentations.</p></div>
+    </div>
+  </section>
+</main>
+<script src="assets/js/app.js"></script>
+<script>
+shell("courses");
+const grid = $("#grid");
+[...new Set(COURSES.map(c => c.org))].forEach(o => $("#inst").insertAdjacentHTML("beforeend", `<option>${o}</option>`));
+const dateVal = c => new Date(c.starts).getTime();
+function card(c) {
+  return `<a class="card" href="course.html?id=${c.id}">${thumb(c)}
+    <div class="body">${c.org}<br>${c.code}<span class="t">${c.title}</span>
+      <div class="badges"><span class="badge">${c.weeks} weeks</span><span class="badge">${c.effort}</span></div></div>
+    <div class="foot"><span>Starts: ${c.starts}</span></div></a>`;
+}
+function render() {
+  const q = $("#q").value.toLowerCase(), i = $("#inst").value, d = $("#dur").value, s = $("#sort").value;
+  let l = COURSES.filter(c => (!q || (c.title + c.org + c.blurb).toLowerCase().includes(q)) && (!i || c.org === i) && (!d || c.weeks == d));
+  if (s === "az") l.sort((a, b) => a.title.localeCompare(b.title));
+  if (s === "new") l.sort((a, b) => dateVal(b) - dateVal(a));
+  grid.innerHTML = l.map(card).join("") || `<div class="empty">No courses match your filters.</div>`;
+  $("#count").textContent = `(${l.length})`;
+}
+["q", "inst", "dur", "sort"].forEach(id => $("#" + id).addEventListener("input", render));
+const view = v => { grid.classList.toggle("list", v === "list"); $("#vlist").classList.toggle("on", v === "list"); $("#vgrid").classList.toggle("on", v !== "list"); save("view", v); };
+$("#vgrid").onclick = () => view("grid"); $("#vlist").onclick = () => view("list");
+view(load("view") || "grid"); render();
+// animated counters
+const io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; io.unobserve(e.target);
+  const n = +e.target.dataset.n; let k = 0; const step = () => { k = Math.min(n, k + Math.ceil(n / 40)); e.target.textContent = k.toLocaleString() + (n >= 1000 && k === n ? "+" : ""); if (k < n) requestAnimationFrame(step); }; step(); }));
+$$("[data-n]").forEach(el => io.observe(el));
+</script>
+</body>
+</html>

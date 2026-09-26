@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instructor Guide | Roboracer</title>
+<link rel="icon" href="assets/logos/RoboRacer_SquareLogo.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<main class="wrap">
+  <section class="sect" style="margin-top:32px">
+    <h1 style="margin:0 0 8px">Teach Roboracer at your university</h1>
+    <p style="color:var(--muted);max-width:720px">Copy the complete course without licensing, add your university or lab logo and colours, and choose the lectures that fit your students. Here is how it works, step by step.</p>
+  </section>
+
+  <div data-tabs>
+    <div class="tabs"><button class="on" data-tab="g1">Instructor guide</button><button data-tab="g2">Add users &amp; courses (admins)</button><button data-tab="g3">Welcome email</button><button data-tab="g4">Plan your course</button></div>
+
+    <div class="tabpane on steps" id="g1">
+      <div class="acc open"><button>Apply for setting up a course</button><div class="in"><ul>
+        <li>Write an email with your university, names and what you are interested in</li>
+        <li>You receive an account as a (restricted) admin for the LMS</li>
+        <li>Short tour: the <b>Courses portal</b> (what students see) and the <b>Studio portal</b> (where you edit)</li></ul></div></div>
+      <div class="acc"><button>Modify the overall course information</button><div class="in"><ul>
+        <li>Enter the necessary information in Studio</li><li>Set the start and end date of the course</li><li>Integrate your university logos</li><li>Add instructors and their images</li><li>Attach your specific course syllabus</li><li>Add new team members to the course</li></ul></div></div>
+      <div class="acc"><button>Modify the course itself</button><div class="in"><ul>
+        <li>Open your course in Studio</li><li>Delete course material you do not need</li><li>Create a new unit</li><li>Create text material</li><li>Add slides and videos</li><li>Add advanced problem types, e.g. quizzes</li><li>Publish the new material</li></ul></div></div>
+      <div class="acc"><button>Enrollment and course management</button><div class="in"><ul>
+        <li>Manage everything from the Courses portal</li><li>Students need to sign in first</li><li>Invite students by link</li><li>Students enroll in the specific course</li></ul></div></div>
+      <div class="acc"><button>How students experience the course</button><div class="in"><ul>
+        <li>What students see and how they go through the course</li><li>Interaction: asking questions and taking part in discussions</li><li>How students hand in material</li></ul></div></div>
+    </div>
+
+    <div class="tabpane steps" id="g2">
+      <p style="color:var(--muted)">For Roboracer team admins only.</p>
+      <div class="acc open"><button>Create the user account</button><div class="in"><ul>
+        <li>Sign in to the Courses portal and open the Django admin console</li><li>Go to Authentication and Authorization › Users</li><li>Click <b>Add user</b> and enter the user information</li>
+        <li>Open the new user: set the email address and make the account active</li><li>Mark as <b>Staff</b> — only for Roboracer team members. Afterwards Studio login is possible</li></ul></div></div>
+      <div class="acc"><button>Give the user access to a course</button><div class="in"><ul>
+        <li>Open Studio and go to the desired course</li><li>Settings dropdown → <b>Course Team</b></li><li>Click “Add a new team member”, enter the email address</li><li>Make them staff for the course</li></ul></div></div>
+      <div class="acc"><button>Create a new course for the new user</button><div class="in"><ul>
+        <li>Go back to Studio as admin</li><li>Re-run the desired 4-, 10- or 15-week course by clicking on it</li><li>Rename the course and add the correct affiliation</li><li>Add the new user to the course as Staff</li><li>The user can now see the course and add material</li></ul></div></div>
+    </div>
+
+    <div class="tabpane" id="g3">
+      <p style="color:var(--muted)">Template to send to a new instructor. Fill in the blanks, then copy.</p>
+      <div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:12px">
+        <input id="em" placeholder="Email"><input id="un" placeholder="Username"></div>
+      <pre class="mail" id="mail"></pre>
+      <button class="btn primary" id="copy">Copy email</button>
+    </div>
+
+    <div class="tabpane" id="g4">
+      <div class="panel" style="max-width:640px">
+        <h3 style="margin-top:0">Which lectures should I teach?</h3>
+        <label>Course length: <b id="wk">10</b> weeks<br><input type="range" id="w" min="4" max="15" value="10" style="width:100%"></label>
+        <label style="display:block;margin-top:12px">Students' prior knowledge<br>
+          <select id="pk" style="width:100%"><option value="0">Beginner (no ROS / control background)</option><option value="1" selected>Some robotics or control</option><option value="2">Advanced (graduate level)</option></select></label>
+        <p id="plan" style="margin-bottom:0"></p>
+      </div>
+    </div>
+  </div>
+
+  <section class="sect" id="faq"><h2>Help &amp; resources</h2>
+    <div class="acc"><button>I feel lost with Open edX</button><div class="in">The <a href="https://edx.readthedocs.io/projects/edx-partner-course-staff/en/latest/index.html" target="_blank" rel="noopener">Open edX partner course staff documentation</a> covers everything you can put in your course.</div></div>
+    <div class="acc"><button>Where do I start?</button><div class="in">Begin with the “Lecturer Introduction” unit, which gives a short, complete overview of what you can do in the Roboracer LMS. All material is provided as text and video.</div></div>
+    <div class="acc"><button>Do I need teaching assistants?</button><div class="in">The course is built so you nearly do not need any. Lecturer notes, interactive tests and grading support are included.</div></div>
+  </section>
+</main>
+<script src="assets/js/app.js"></script>
+<script>
+shell("instructors");
+const mail = () => `Hi,
+
+Your personalized Roboracer course for you is ready, here is your login data:
+    email: ${$("#em").value}
+    username: ${$("#un").value}
+    password: (temporary password – supplied separately)
+
+The first thing to do is create a new password for yourself: open the account settings on the Courses portal, log in with the provided credentials and reset your password.
+
+Afterwards you are able to log in to your new, personalized Roboracer Learning Management System:
+1. Go to the course website, log in and see the course as it is displayed to your students.
+2. Go to the Studio website, log in, open your course and modify the material.
+3. Send the enrollment link of the course to your students.
+
+We recommend you start with the "Lecturer Introduction", which gives you a short and comprehensive overview of what you can do in the Roboracer LMS. All material is provided with text and videos.
+
+If you ever feel lost with Open edX, see: https://edx.readthedocs.io/projects/edx-partner-course-staff/en/latest/index.html`;
+const upd = () => $("#mail").textContent = mail();
+["em", "un"].forEach(i => $("#" + i).oninput = upd); upd();
+$("#copy").onclick = () => navigator.clipboard?.writeText(mail()).then(() => toast("Email copied"), () => toast("Copy failed"));
+function plan() {
+  const w = +$("#w").value, k = +$("#pk").value; $("#wk").textContent = w;
+  const total = 16, n = Math.min(total, Math.round(w * 1.1));
+  const start = k === 2 ? 4 : 1, end = Math.min(total, start + n - 1);
+  const rec = w <= 5 ? "the 4 Weeks Course" : w <= 11 ? "the 10 Weeks Course" : "the 15 Weeks Course";
+  $("#plan").innerHTML = `Suggested: <b>Lectures ${start}–${end}</b> (about ${end - start + 1} lectures). Start from ${rec}, then delete units you do not need in Studio.` + (k === 0 ? " Keep Module A (foundations) – your students need the ROS and control basics." : "");
+}
+$("#w").oninput = $("#pk").oninput = plan; plan();
+if (location.hash === "#faq") $$("#faq .acc")[0].classList.add("open");
+</script>
+</body>
+</html>
