@@ -33,17 +33,17 @@ const ICONS = {
 const ic = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ""}</svg>`;
 
 const COURSES = [
-  { id: "roboracer-4w", title: "Roboracer – 4 Weeks Course", org: "Roboracer", code: "04weeks", weeks: 4, mods: 2, type: "core", starts: "Dec 31, 2019", ends: "Feb 27, 2021", effort: "8 hours per week",
+  { id: "roboracer-4w", title: "Roboracer – 4 Weeks Course", org: "Roboracer", code: "04weeks", weeks: 4, mods: 2, type: "core", starts: "Oct 5, 2026", ends: "Nov 2, 2026", effort: "8 hours per week",
     blurb: "A compact introduction: ROS basics, the Roboracer vehicle, reactive methods and a first race." },
-  { id: "roboracer-10w", title: "Roboracer – 10 Weeks Course", org: "Roboracer", code: "10weeks", weeks: 10, mods: 4, type: "core", starts: "Dec 31, 2019", ends: "Feb 27, 2021", effort: "12 hours per week",
+  { id: "roboracer-10w", title: "Roboracer – 10 Weeks Course", org: "Roboracer", code: "10weeks", weeks: 10, mods: 4, type: "core", starts: "Nov 2, 2026", ends: "Jan 11, 2027", effort: "12 hours per week",
     blurb: "Adds mapping, localization and planning to the core lectures, with lab assignments." },
-  { id: "roboracer-15w", title: "Roboracer – 15 Weeks Course", org: "Roboracer", code: "15weeks", weeks: 15, mods: 7, type: "core", starts: "Dec 31, 2019", ends: "Feb 27, 2021", effort: "20 hours per week",
+  { id: "roboracer-15w", title: "Roboracer – 15 Weeks Course", org: "Roboracer", code: "15weeks", weeks: 15, mods: 7, type: "core", starts: "Sep 14, 2026", ends: "Dec 28, 2026", effort: "20 hours per week",
     blurb: "The full course: perception, planning, control, vision, special topics and the Grand Prix." },
-  { id: "penn", title: "Roboracer – Penn", org: "University-of-Pennsylvania", code: "F110", weeks: 15, mods: 7, type: "university", img: "assets/logos/penn-wide.png", starts: "Dec 31, 2019", ends: "Feb 27, 2021", effort: "20 hours per week",
+  { id: "penn", title: "Roboracer – Penn", org: "University-of-Pennsylvania", code: "F110", weeks: 15, mods: 7, type: "university", img: "assets/logos/penn-wide.png", starts: "Jan 20, 2027", ends: "May 5, 2027", effort: "20 hours per week",
     blurb: "The original Penn offering of the Roboracer course, taught by the course authors." },
-  { id: "tum", title: "Roboracer – TUM", org: "Technical-University-of-Munich", code: "F110", weeks: 10, mods: 4, type: "university", starts: "Oct 31, 2020", ends: "Mar 31, 2021",
+  { id: "tum", title: "Roboracer – TUM", org: "Technical-University-of-Munich", code: "F110", weeks: 10, mods: 4, type: "university", starts: "Oct 19, 2026", ends: "Dec 28, 2026",
     effort: "12 hours per week", wm: ["TUM", "Technische Universität München"], color: "#0065bd", blurb: "Roboracer taught at the Technical University of Munich." },
-  { id: "ucsd", title: "Roboracer – UC San Diego", org: "UC-SanDiego", code: "10weeks", weeks: 10, mods: 4, type: "university", starts: "Dec 31, 2020", ends: "Jun 15, 2021", effort: "12 hours per week",
+  { id: "ucsd", title: "Roboracer – UC San Diego", org: "UC-SanDiego", code: "10weeks", weeks: 10, mods: 4, type: "university", starts: "Jan 4, 2027", ends: "Mar 15, 2027", effort: "12 hours per week",
     wm: ["UC San Diego", "University of California"], color: "#182b49", blurb: "Roboracer taught at UC San Diego." },
 ];
 

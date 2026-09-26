@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/logos/RoboRacer_SquareLogo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:ital,wght@1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=3">
+<link rel="stylesheet" href="assets/css/style.css?v=4">
 </head>
 <body>
 <main class="wrap">
@@ -49,7 +49,7 @@
     <div class="features" id="features"></div>
   </section>
 </main>
-<script src="assets/js/app.js?v=3"></script>
+<script src="assets/js/app.js?v=4"></script>
 <script>
 shell("courses");
 const STATS = ["book", "users", "cap", "building"];
@@ -64,9 +64,7 @@ const FEATS = [
   ["grade", "Grading built in", "Set weights, pass thresholds and honor-code rules for quizzes, labs and races."],
   ["calendar", "New content monthly", "Expert discussions, research updates and industry presentations you can plug in."],
 ];
-const HL = [["copy", "Copy it, no licensing", "Copy the complete course for your own institution without any licensing."], ["palette", "Rebrand it", "Add your university or lab logo and your CI colours."], ["sliders", "Pick your lectures", "Teach Lectures 2–5, 8–13 and 15? Choose by prior knowledge, time and student interest."]];
-$("#features").innerHTML = FEATS.map(f => `<div class="feat"><div class="ico">${ic(f[0])}</div><h3>${f[1]}</h3><p>${f[2]}</p></div>`).join("") +
-  HL.map(f => `<div class="feat hl"><div class="ico">${ic(f[0])}</div><h3>${f[1]}</h3><p>${f[2]}</p></div>`).join("");
+$("#features").innerHTML = FEATS.map(f => `<div class="feat"><div class="ico">${ic(f[0])}</div><h3>${f[1]}</h3><p>${f[2]}</p></div>`).join("");
 
 const grid = $("#grid");
 [...new Set(COURSES.map(c => c.org))].forEach(o => $("#inst").insertAdjacentHTML("beforeend", `<option value="${o}">${o.replace(/-/g, " ")}</option>`));
