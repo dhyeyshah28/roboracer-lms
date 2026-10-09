@@ -187,46 +187,77 @@ function shell(active) {
 window.requireSignIn = () => { if (user()) return true; openAuth("in", "student"); toast("Please sign in first"); return false; };
 
 /* ---------- course chatbot (rule-based, scoped to one course) ---------- */
-function courseReply(c, qRaw) {
-  const q = qRaw.toLowerCase(), org = c.org.replace(/-/g, " ");
-  const R = [
-    [/\b(hi|hello|hey|yo)\b/, () => `Hi! Ask me about <b>${esc(c.title)}</b> — duration, schedule, topics, enrollment, grading, prerequisites or staff.`],
-    [/\b(how long|duration|weeks|length|how many weeks)\b/, () => `${esc(c.title)} runs <b>${c.weeks} weeks</b> (${esc(c.effort)}), with ${lectureCount(c)} units across ${outline(c).length} modules.`],
-    [/\b(start|end|when (does|is)|date|schedule)\b/, () => `Classes start <b>${esc(c.starts)}</b> and run through <b>${esc(c.ends)}</b>. You can enroll any time before it ends.`],
-    [/\b(effort|hours?|workload|time commitment|how much time)\b/, () => `Plan for about <b>${esc(c.effort)}</b> on this course.`],
-    [/\b(prerequisite|background|beginner|level|need to know|experience)\b/, () => `This isn't a beginner course — it's best suited for graduate level, or at least a senior undergraduate level.`],
-    [/\b(hardware|car|robot|build|buy|simulator|simulation)\b/, () => `No purchase is required — everything works in the simulator. The 1/10th-scale Roboracer car is an optional add-on.`],
-    [/\b(learn|topics?|cover|curriculum|content)\b/, () => `You'll learn:<br>${learnFor(c).slice(0, 6).map(x => "• " + esc(x)).join("<br>")}${learnFor(c).length > 6 ? "<br>…see the About tab for the full list." : ""}`],
-    [/\b(module|lecture|unit|outline|syllabus)\b/, () => `The outline has <b>${outline(c).length} modules</b> and <b>${lectureCount(c)} units</b>: ${outline(c).map(m => esc(m[0])).join(", ")}. See the Course outline tab for the full list.`],
-    [/\b(enroll|enrol|sign up|register|join|get started)\b/, () => `Click <b>Enroll now</b> at the top of this page — you'll be asked to sign in or register as a student first. It's free.`],
-    [/\b(cost|price|free|pay|licen[cs]e|money)\b/, () => `${esc(c.title)} is completely free, and instructors can copy it without any licensing.`],
-    [/\b(grade|grading|exam|quiz|pass|cheat|honor)\b/, () => `Grading is based on quizzes and lab work${c.weeks > 5 ? ", plus race or competition performance" : ""}. Instructors set the exact weights and pass mark — see the Logistics tab.`],
-    [/\b(staff|instructor|teacher|who teaches|professor|author)\b/, () => `${esc(STAFF.name)} leads this course${c.type === "university" && c.id !== "penn" ? `, with local instructors from ${esc(org)}` : ""}. See the Staff tab for details.`],
-    [/\b(discuss|stuck|contact|ask someone)\b/, () => `Use the discussion group linked from the course to ask questions — course staff and other students answer there.`],
-    [/\b(certificate|credential|credit)\b/, () => `There's no certificate built in — check with your instructor about credit or completion recognition at your institution.`],
-    [/\b(thank|thanks|thx|bye|goodbye)\b/, () => `You're welcome! Good luck with ${esc(c.title)}.`],
-  ];
-  for (const [re, fn] of R) if (re.test(q)) return fn();
-  return `That's outside what I know about <b>${esc(c.title)}</b> — I can only help with this course. Try asking about its duration, schedule, topics, enrollment, grading, prerequisites or staff.`;
+function lev(a, b) {
+  if (a === b) return 0; const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[n];
 }
-function platformReply(qRaw) {
-  const q = qRaw.toLowerCase();
-  const R = [
-    [/\b(hi|hello|hey|yo)\b/, () => `Hi! I can help you find a course, explain enrollment or point you to the instructor guide. Open a course page and I'll switch to answering questions about that specific course.`],
-    [/\b(find|browse|course|catalog|list|search)\b/, () => `Browse all courses in the Courses section on the home page — search, filter by institution or duration, and sort them.`],
-    [/\b(teach|instructor|become|university|rebrand|lab)\b/, () => `Head to the <b>For Instructors</b> page — register as an instructor, follow the step-by-step guide, and plan your course in the dashboard.`],
-    [/\b(free|cost|price|licen[cs]e|money)\b/, () => `Every course is free, and instructors can copy the material without any licensing.`],
-    [/\b(enroll|enrol|sign up|register|join|account)\b/, () => `Open any course page and click <b>Enroll now</b> — you'll be asked to sign in or register as a student first.`],
-    [/\b(thank|thanks|thx|bye|goodbye)\b/, () => `You're welcome — happy learning!`],
+function fuzzyMatch(rules, q) {
+  const words = q.toLowerCase().split(/[^a-z']+/).filter(w => w.length > 3);
+  let best = null, bestD = Infinity;
+  for (const r of rules) for (const k of r.kws || []) for (const w of words) {
+    if (w[0] !== k[0] || Math.abs(w.length - k.length) > 2) continue;
+    const thresh = k.length <= 5 ? 1 : 2;
+    const d = lev(w, k);
+    if (d <= thresh && d < bestD) { bestD = d; best = r; }
+  }
+  return best;
+}
+function runRules(rules, qRaw, fallback) {
+  const q = qRaw.toLowerCase().trim();
+  for (const r of rules) if (r.re.test(q)) return r.an();
+  const m = fuzzyMatch(rules, q);
+  if (m) return m.an();
+  return fallback();
+}
+function courseRules(c) {
+  const org = c.org.replace(/-/g, " "), uniStaff = c.type === "university" && c.id !== "penn";
+  return [
+    { re: /\b(hi|hello|hey|yo|good (morning|afternoon|evening))\b/, kws: ["hello"], an: () => ({ html: `Hi! Ask me about <b>${esc(c.title)}</b> — duration, schedule, topics, enrollment, grading, prerequisites or staff.` }) },
+    { re: /\b(how are you|how'?s it going|who are you|what are you|are you (a |an )?(bot|robot|ai|human))\b/, an: () => ({ html: `I'm doing well, thanks for asking! I'm a simple assistant that only knows about <b>${esc(c.title)}</b> — what would you like to know?` }) },
+    { re: /\b(how long|duration|weeks?|length|how many weeks)\b/, kws: ["duration", "weeks", "length"], an: () => ({ html: `${esc(c.title)} runs <b>${c.weeks} weeks</b> (${esc(c.effort)}), with ${lectureCount(c)} units across ${outline(c).length} modules.` }) },
+    { re: /\b(start|end|when (does|is)|date|schedule|deadline)\b/, kws: ["schedule", "start", "date"], an: () => ({ html: `Classes start <b>${esc(c.starts)}</b> and run through <b>${esc(c.ends)}</b>. You can enroll any time before it ends.` }) },
+    { re: /\b(effort|hours?|workload|time commitment|how much time)\b/, kws: ["effort", "hours", "workload"], an: () => ({ html: `Plan for about <b>${esc(c.effort)}</b> on this course.` }) },
+    { re: /\b(prerequisite|background|beginner|level|need to know|experience|skills? required)\b/, kws: ["prerequisite", "background", "beginner", "experience"], an: () => ({ html: `This isn't a beginner course — it's best suited for graduate level, or at least a senior undergraduate level.` }) },
+    { re: /\b(hardware|the car|robot|build|buy|simulator|simulation|equipment)\b/, kws: ["hardware", "simulator", "equipment"], an: () => ({ html: `No purchase is required — everything works in the simulator. The 1/10th-scale Roboracer car is an optional add-on.` }) },
+    { re: /\b(learn|topics?|cover|curriculum|content)\b/, kws: ["topics", "curriculum", "content"], an: () => ({ html: `You'll learn:<br>${learnFor(c).slice(0, 6).map(x => "• " + esc(x)).join("<br>")}${learnFor(c).length > 6 ? "<br>…see the full list below." : ""}`, cta: [{ label: "Open the About tab", tab: "t1" }] }) },
+    { re: /\b(module|lecture|unit|outline|syllabus)\b/, kws: ["module", "lecture", "outline", "syllabus"], an: () => ({ html: `The outline has <b>${outline(c).length} modules</b> and <b>${lectureCount(c)} units</b>: ${outline(c).map(m => esc(m[0])).join(", ")}.`, cta: [{ label: "Open the Course outline tab", tab: "t2" }] }) },
+    { re: /\b(enroll|enrol|sign up|signup|register|join|get started|how do i start)\b/, kws: ["enroll", "register", "signup"], an: () => ({ html: `Click <b>Enroll now</b> at the top of this page — you'll be asked to sign in or register as a student first. It's free.`, cta: [{ label: "Scroll to Enroll now", scrollTop: true }] }) },
+    { re: /\b(cost|price|free|pay|licen[cs]e|money|fee)\b/, kws: ["free", "price", "fee"], an: () => ({ html: `${esc(c.title)} is completely free, and instructors can copy it without any licensing.` }) },
+    { re: /\b(grade|grading|exam|quiz|pass|cheat|honor|assessment)\b/, kws: ["grading", "exam", "assessment"], an: () => ({ html: `Grading is based on quizzes and lab work${c.weeks > 5 ? ", plus race or competition performance" : ""}. Instructors set the exact weights and pass mark.`, cta: [{ label: "Open the Logistics tab", tab: "t4" }] }) },
+    { re: /\b(staff|instructors?|teachers?|who teaches|professors?|authors?|tas?\b|teaching assistants?)\b/, kws: ["instructor", "teacher", "professor", "author"], an: () => ({ html: `${esc(STAFF.name)} leads this course${uniStaff ? `, with local instructors from ${esc(org)}` : ""}. The course is also designed to need almost no teaching assistants.`, cta: [{ label: "Open the Staff tab", tab: "t3" }] }) },
+    { re: /\b(discuss|stuck|contact|ask someone|forum|community)\b/, kws: ["discussion", "forum", "contact"], an: () => ({ html: `Use the discussion group linked from the course to ask questions — course staff and other students answer there.` }) },
+    { re: /\b(certificate|credential|credit)\b/, kws: ["certificate", "credential"], an: () => ({ html: `There's no certificate built in — check with your instructor about credit or completion recognition at your institution.` }) },
+    { re: /\b(about|overview|summary|tell me more|what is this|describe|details|info)\b/, kws: ["overview", "summary", "describe"], an: () => ({ html: `${esc(c.blurb)} It runs <b>${c.weeks} weeks</b> (${esc(c.effort)}) and covers ${learnFor(c).slice(0, 3).map(esc).join(", ")}, among other topics.`, cta: [{ label: "Open the Course outline tab", tab: "t2" }] }) },
+    { re: /\b(thank|thanks|thx|bye|goodbye|see ya)\b/, an: () => ({ html: `You're welcome! Good luck with ${esc(c.title)}.` }) },
   ];
-  for (const [re, fn] of R) if (re.test(q)) return fn();
-  return `I can only answer general questions about the platform here. Open a specific course page and I'll answer questions about that course.`;
+}
+function platformRules() {
+  return [
+    { re: /\b(hi|hello|hey|yo|good (morning|afternoon|evening))\b/, an: () => ({ html: `Hi! I can help you find a course, explain enrollment or point you to the instructor guide. Open a course page and I'll switch to answering questions about that specific course.` }) },
+    { re: /\b(how are you|how'?s it going|who are you|what are you|are you (a |an )?(bot|robot|ai|human))\b/, an: () => ({ html: `Doing well, thanks! I'm a simple assistant for the Roboracer platform — ask me how to find or teach a course.` }) },
+    { re: /\b(find|browse|course|catalog|list|search)\b/, kws: ["browse", "catalog", "search"], an: () => ({ html: `Browse all courses in the Courses section on the home page — search, filter by institution or duration, and sort them.`, cta: [{ label: "Browse courses", href: "index.html#courses" }] }) },
+    { re: /\b(teach|instructor|become|university|rebrand|lab)\b/, kws: ["teach", "instructor", "rebrand"], an: () => ({ html: `Head to the <b>For Instructors</b> page — register as an instructor, follow the step-by-step guide, and plan your course in the dashboard.`, cta: [{ label: "For Instructors", href: "instructors.html" }] }) },
+    { re: /\b(free|cost|price|licen[cs]e|money|fee)\b/, kws: ["free", "price", "fee"], an: () => ({ html: `Every course is free, and instructors can copy the material without any licensing.` }) },
+    { re: /\b(enroll|enrol|sign up|signup|register|join|account)\b/, kws: ["enroll", "register", "signup"], an: () => ({ html: `Open any course page and click <b>Enroll now</b> — you'll be asked to sign in or register as a student first.`, cta: [{ label: "Browse courses", href: "index.html#courses" }] }) },
+    { re: /\b(thank|thanks|thx|bye|goodbye|see ya)\b/, an: () => ({ html: `You're welcome — happy learning!` }) },
+  ];
+}
+function ctaHtml(cta) {
+  if (!cta || !cta.length) return "";
+  return `<div class="chat-cta">${cta.map(c => c.href ? `<a href="${esc(c.href)}" class="chat-cta-btn">${esc(c.label)} ${ic("arrow")}</a>`
+    : `<button type="button" class="chat-cta-btn" ${c.tab ? `data-chat-tab="${esc(c.tab)}"` : `data-chat-top="1"`}>${esc(c.label)} ${ic("arrow")}</button>`).join("")}</div>`;
 }
 function initChat(course) {
   const isCourse = !!course;
   const chips = isCourse ? ["How long is it?", "What will I learn?", "How do I enroll?", "Do I need the hardware?"] : ["How do I find a course?", "How do I teach a course?", "Is it free?"];
   const greet = isCourse ? `Hi! I'm the course assistant for <b>${esc(course.title)}</b>. Ask me about its schedule, topics, enrollment, grading or staff — I only know about this course.`
     : `Hi! I can help with general questions about Roboracer. Open a course page and I'll answer questions about that specific course.`;
+  const fallback = isCourse
+    ? () => ({ html: `That's outside what I know about <b>${esc(course.title)}</b> — I can only help with this course. Try asking about its duration, schedule, topics, enrollment, grading, prerequisites or staff.` })
+    : () => ({ html: `I can only answer general questions about the platform here. Open a specific course page and I'll answer questions about that course.` });
+  const rules = isCourse ? courseRules(course) : platformRules();
 
   document.body.insertAdjacentHTML("beforeend", `
   <button class="chat-fab" id="chatFab" aria-label="Open course chat" aria-expanded="false">${ic("chat")}</button>
@@ -240,9 +271,9 @@ function initChat(course) {
   </div>`);
 
   const body = $("#chatBody");
-  const addMsg = (who, html) => { body.insertAdjacentHTML("beforeend", `<div class="chat-msg ${who}">${html}</div>`); body.scrollTop = body.scrollHeight; };
+  const addMsg = (who, r) => { body.insertAdjacentHTML("beforeend", `<div class="chat-msg ${who}">${typeof r === "string" ? r : r.html}${who === "bot" ? ctaHtml(r.cta) : ""}</div>`); body.scrollTop = body.scrollHeight; };
   let opened = false;
-  const open = () => { $("#chatPanel").classList.add("open"); $("#chatFab").setAttribute("aria-expanded", "true"); if (!opened) { opened = true; addMsg("bot", greet); } $("#chatInput").focus(); };
+  const open = () => { $("#chatPanel").classList.add("open"); $("#chatFab").setAttribute("aria-expanded", "true"); if (!opened) { opened = true; addMsg("bot", { html: greet }); } $("#chatInput").focus(); };
   const close = () => { $("#chatPanel").classList.remove("open"); $("#chatFab").setAttribute("aria-expanded", "false"); };
   $("#chatFab").onclick = () => $("#chatPanel").classList.contains("open") ? close() : open();
   $("#chatClose").onclick = close;
@@ -252,9 +283,13 @@ function initChat(course) {
     addMsg("user", esc(q));
     const typing = document.createElement("div"); typing.className = "chat-msg bot typing"; typing.innerHTML = "<span></span><span></span><span></span>";
     body.appendChild(typing); body.scrollTop = body.scrollHeight;
-    setTimeout(() => { typing.remove(); addMsg("bot", isCourse ? courseReply(course, q) : platformReply(q)); }, 450 + Math.random() * 250);
+    setTimeout(() => { typing.remove(); addMsg("bot", runRules(rules, q, fallback)); }, 450 + Math.random() * 250);
   }
   $("#chatForm").onsubmit = e => { e.preventDefault(); const v = $("#chatInput").value.trim(); if (!v) return; $("#chatInput").value = ""; reply(v); };
   $("#chatChips").onclick = e => { const b = e.target.closest("[data-q]"); if (!b) return; reply(b.dataset.q); };
+  $("#chatBody").addEventListener("click", e => {
+    const t = e.target.closest("[data-chat-tab]"); if (t) { const tb = $(`.tabs button[data-tab="${t.dataset.chatTab}"]`); tb?.click(); tb?.scrollIntoView({ behavior: "smooth", block: "start" }); close(); }
+    const top = e.target.closest("[data-chat-top]"); if (top) { window.scrollTo({ top: 0, behavior: "smooth" }); close(); }
+  });
 }
 window.initChat = initChat;

@@ -220,6 +220,10 @@ footer .r{display:flex;align-items:center;gap:12px}footer .r img{height:26px}
 .chat-msg{max-width:84%;padding:9px 12px;border-radius:14px;font-size:.86rem;line-height:1.4;word-break:break-word}
 .chat-msg.bot{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
 .chat-msg.user{background:var(--grad);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.chat-cta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chat-cta-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--accent);color:var(--accent);background:var(--soft);border-radius:99px;padding:4px 10px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none}
+.chat-cta-btn:hover{text-decoration:none;background:var(--accent);color:#fff}
+.chat-cta-btn .ic{width:12px;height:12px}
 .chat-msg.typing{display:flex;gap:4px;padding:12px 14px;align-items:center}
 .chat-msg.typing span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:chatTyping 1s infinite ease-in-out}
 .chat-msg.typing span:nth-child(2){animation-delay:.15s}.chat-msg.typing span:nth-child(3){animation-delay:.3s}
