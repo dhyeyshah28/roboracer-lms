@@ -185,3 +185,76 @@ function shell(active) {
   });
 }
 window.requireSignIn = () => { if (user()) return true; openAuth("in", "student"); toast("Please sign in first"); return false; };
+
+/* ---------- course chatbot (rule-based, scoped to one course) ---------- */
+function courseReply(c, qRaw) {
+  const q = qRaw.toLowerCase(), org = c.org.replace(/-/g, " ");
+  const R = [
+    [/\b(hi|hello|hey|yo)\b/, () => `Hi! Ask me about <b>${esc(c.title)}</b> — duration, schedule, topics, enrollment, grading, prerequisites or staff.`],
+    [/\b(how long|duration|weeks|length|how many weeks)\b/, () => `${esc(c.title)} runs <b>${c.weeks} weeks</b> (${esc(c.effort)}), with ${lectureCount(c)} units across ${outline(c).length} modules.`],
+    [/\b(start|end|when (does|is)|date|schedule)\b/, () => `Classes start <b>${esc(c.starts)}</b> and run through <b>${esc(c.ends)}</b>. You can enroll any time before it ends.`],
+    [/\b(effort|hours?|workload|time commitment|how much time)\b/, () => `Plan for about <b>${esc(c.effort)}</b> on this course.`],
+    [/\b(prerequisite|background|beginner|level|need to know|experience)\b/, () => `This isn't a beginner course — it's best suited for graduate level, or at least a senior undergraduate level.`],
+    [/\b(hardware|car|robot|build|buy|simulator|simulation)\b/, () => `No purchase is required — everything works in the simulator. The 1/10th-scale Roboracer car is an optional add-on.`],
+    [/\b(learn|topics?|cover|curriculum|content)\b/, () => `You'll learn:<br>${learnFor(c).slice(0, 6).map(x => "• " + esc(x)).join("<br>")}${learnFor(c).length > 6 ? "<br>…see the About tab for the full list." : ""}`],
+    [/\b(module|lecture|unit|outline|syllabus)\b/, () => `The outline has <b>${outline(c).length} modules</b> and <b>${lectureCount(c)} units</b>: ${outline(c).map(m => esc(m[0])).join(", ")}. See the Course outline tab for the full list.`],
+    [/\b(enroll|enrol|sign up|register|join|get started)\b/, () => `Click <b>Enroll now</b> at the top of this page — you'll be asked to sign in or register as a student first. It's free.`],
+    [/\b(cost|price|free|pay|licen[cs]e|money)\b/, () => `${esc(c.title)} is completely free, and instructors can copy it without any licensing.`],
+    [/\b(grade|grading|exam|quiz|pass|cheat|honor)\b/, () => `Grading is based on quizzes and lab work${c.weeks > 5 ? ", plus race or competition performance" : ""}. Instructors set the exact weights and pass mark — see the Logistics tab.`],
+    [/\b(staff|instructor|teacher|who teaches|professor|author)\b/, () => `${esc(STAFF.name)} leads this course${c.type === "university" && c.id !== "penn" ? `, with local instructors from ${esc(org)}` : ""}. See the Staff tab for details.`],
+    [/\b(discuss|stuck|contact|ask someone)\b/, () => `Use the discussion group linked from the course to ask questions — course staff and other students answer there.`],
+    [/\b(certificate|credential|credit)\b/, () => `There's no certificate built in — check with your instructor about credit or completion recognition at your institution.`],
+    [/\b(thank|thanks|thx|bye|goodbye)\b/, () => `You're welcome! Good luck with ${esc(c.title)}.`],
+  ];
+  for (const [re, fn] of R) if (re.test(q)) return fn();
+  return `That's outside what I know about <b>${esc(c.title)}</b> — I can only help with this course. Try asking about its duration, schedule, topics, enrollment, grading, prerequisites or staff.`;
+}
+function platformReply(qRaw) {
+  const q = qRaw.toLowerCase();
+  const R = [
+    [/\b(hi|hello|hey|yo)\b/, () => `Hi! I can help you find a course, explain enrollment or point you to the instructor guide. Open a course page and I'll switch to answering questions about that specific course.`],
+    [/\b(find|browse|course|catalog|list|search)\b/, () => `Browse all courses in the Courses section on the home page — search, filter by institution or duration, and sort them.`],
+    [/\b(teach|instructor|become|university|rebrand|lab)\b/, () => `Head to the <b>For Instructors</b> page — register as an instructor, follow the step-by-step guide, and plan your course in the dashboard.`],
+    [/\b(free|cost|price|licen[cs]e|money)\b/, () => `Every course is free, and instructors can copy the material without any licensing.`],
+    [/\b(enroll|enrol|sign up|register|join|account)\b/, () => `Open any course page and click <b>Enroll now</b> — you'll be asked to sign in or register as a student first.`],
+    [/\b(thank|thanks|thx|bye|goodbye)\b/, () => `You're welcome — happy learning!`],
+  ];
+  for (const [re, fn] of R) if (re.test(q)) return fn();
+  return `I can only answer general questions about the platform here. Open a specific course page and I'll answer questions about that course.`;
+}
+function initChat(course) {
+  const isCourse = !!course;
+  const chips = isCourse ? ["How long is it?", "What will I learn?", "How do I enroll?", "Do I need the hardware?"] : ["How do I find a course?", "How do I teach a course?", "Is it free?"];
+  const greet = isCourse ? `Hi! I'm the course assistant for <b>${esc(course.title)}</b>. Ask me about its schedule, topics, enrollment, grading or staff — I only know about this course.`
+    : `Hi! I can help with general questions about Roboracer. Open a course page and I'll answer questions about that specific course.`;
+
+  document.body.insertAdjacentHTML("beforeend", `
+  <button class="chat-fab" id="chatFab" aria-label="Open course chat" aria-expanded="false">${ic("chat")}</button>
+  <div class="chat-panel" id="chatPanel" role="dialog" aria-label="Chat">
+    <div class="chat-head"><div class="chat-head-ico">${ic("chat")}</div>
+      <div class="chat-head-t"><b>${isCourse ? "Course assistant" : "Roboracer assistant"}</b><span>${esc(isCourse ? course.title : "Ask about the platform")}</span></div>
+      <button class="icon-btn" id="chatClose" aria-label="Close chat">✕</button></div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-chips" id="chatChips">${chips.map(x => `<button type="button" data-q="${esc(x)}">${esc(x)}</button>`).join("")}</div>
+    <form class="chat-form" id="chatForm"><input id="chatInput" placeholder="${isCourse ? "Ask about this course…" : "Ask a question…"}" autocomplete="off" maxlength="200"><button class="btn primary sm" type="submit" aria-label="Send">${ic("arrow")}</button></form>
+  </div>`);
+
+  const body = $("#chatBody");
+  const addMsg = (who, html) => { body.insertAdjacentHTML("beforeend", `<div class="chat-msg ${who}">${html}</div>`); body.scrollTop = body.scrollHeight; };
+  let opened = false;
+  const open = () => { $("#chatPanel").classList.add("open"); $("#chatFab").setAttribute("aria-expanded", "true"); if (!opened) { opened = true; addMsg("bot", greet); } $("#chatInput").focus(); };
+  const close = () => { $("#chatPanel").classList.remove("open"); $("#chatFab").setAttribute("aria-expanded", "false"); };
+  $("#chatFab").onclick = () => $("#chatPanel").classList.contains("open") ? close() : open();
+  $("#chatClose").onclick = close;
+  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+
+  function reply(q) {
+    addMsg("user", esc(q));
+    const typing = document.createElement("div"); typing.className = "chat-msg bot typing"; typing.innerHTML = "<span></span><span></span><span></span>";
+    body.appendChild(typing); body.scrollTop = body.scrollHeight;
+    setTimeout(() => { typing.remove(); addMsg("bot", isCourse ? courseReply(course, q) : platformReply(q)); }, 450 + Math.random() * 250);
+  }
+  $("#chatForm").onsubmit = e => { e.preventDefault(); const v = $("#chatInput").value.trim(); if (!v) return; $("#chatInput").value = ""; reply(v); };
+  $("#chatChips").onclick = e => { const b = e.target.closest("[data-q]"); if (!b) return; reply(b.dataset.q); };
+}
+window.initChat = initChat;
